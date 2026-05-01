@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - PanelShop</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-server"></i>
+                <span>PanelShop</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/login.html">Login</a>
+                <a href="/register.html" class="active">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Create Account</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regFullName" required placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" required placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" required placeholder="Create a password">
+                </div>
+                <button type="submit" class="btn-primary">Register</button>
+            </form>
+            <p class="auth-link">Already have an account? <a href="/login.html">Login here</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const full_name = document.getElementById('regFullName').value;
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, full_name })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('panelShopUser', JSON.stringify(data.user));
+                    alert('Registration successful!');
+                    window.location.href = '/dashboard.html';
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('Register failed: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
