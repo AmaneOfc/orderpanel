@@ -220,6 +220,136 @@ body {
     color: var(--gray);
 }
 
+/* Auth Pages */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6rem 2rem 2rem;
+    background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    max-width: 450px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-card h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--white);
+}
+
+.auth-card .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-card .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--gray);
+}
+
+.auth-card .form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--white);
+    font-size: 1rem;
+}
+
+.auth-card .form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.auth-card .btn-primary {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--gray);
+}
+
+.auth-link a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+}
+
+/* Payment Modal QR */
+.qr-container {
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.qr-container img {
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--white);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+}
+
+.payment-note {
+    text-align: center;
+    color: var(--gray);
+    margin: 1rem 0;
+}
+
+.payment-status {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.payment-status i {
+    margin-right: 0.5rem;
+}
+
+.panel-login-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+}
+
+.panel-login-info h4 {
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.panel-login-info p {
+    margin: 0.5rem 0;
+    word-break: break-all;
+}
+
 /* Pricing Preview */
 .pricing-preview {
     padding: 5rem 2rem;
