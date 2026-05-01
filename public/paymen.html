@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment — AmanePanel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div style="min-height: calc(100vh - var(--nav-height)); padding-top: var(--nav-height); display: flex; align-items: center; justify-content: center;">
+  <div style="width: 100%; max-width: 520px; padding: 24px;">
+
+    <!-- STATUS: LOADING -->
+    <div id="state-loading" class="card" style="text-align:center;padding:64px 32px;">
+      <div class="spinner" style="margin: 0 auto 20px; width:32px; height:32px; border-width:3px;"></div>
+      <h3>Looking up transaction…</h3>
+      <p class="mt-8" style="font-size:.85rem;">Please wait</p>
+    </div>
+
+    <!-- STATUS: QR PENDING -->
+    <div id="state-pending" class="hidden card" style="text-align:center;padding:32px;">
+      <div style="font-size:.75rem;color:var(--accent);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">QRIS Payment</div>
+      <div id="pay-item" style="font-size:1rem;font-weight:700;color:var(--text-bright);margin-bottom:4px;">—</div>
+      <div id="pay-amount" style="font-size:2rem;font-weight:800;color:var(--text-bright);margin-bottom:24px;">—</div>
+
+      <div id="qr-canvas" style="background:#fff;padding:14px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
+
+      <div class="qr-status" style="justify-content:center;margin-bottom:12px;">
+        <div class="spin"></div>
+        <span>Waiting for payment…</span>
+      </div>
+      <div style="font-size:.8rem;color:var(--amber);">⏱ Expires in <span id="timer-text">10:00</span></div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text-muted);">
+        Open your mobile banking or e-wallet app and scan the QRIS code above.<br>
+        Payment will be confirmed automatically.
+      </div>
+      <button class="btn btn-ghost btn-sm mt-16" onclick="cancelCurrentPayment()">Cancel Transaction</button>
+    </div>
+
+    <!-- STATUS: SUCCESS -->
+    <div id="state-success" class="hidden">
+      <div class="card" style="text-align:center;padding:40px 32px;border-color:rgba(0,255,136,0.4);margin-bottom:16px;">
+        <div style="font-size:3.5rem;margin-bottom:16px;">✅</div>
+        <h2 style="color:var(--green);margin-bottom:8px;">Payment Confirmed!</h2>
+        <p style="font-size:.9rem;">Your transaction was completed successfully.</p>
+      </div>
+
+      <div id="success-creds" class="card hidden">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;">
+          🖥 Panel Credentials
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="creds-list"></div>
+        <div id="open-panel-link" class="mt-16"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <a href="/dashboard.html" class="btn btn-primary" style="flex:1;">Go to Dashboard</a>
+        <a href="/index.html" class="btn btn-secondary" style="flex:1;">Back to Store</a>
+      </div>
+    </div>
+
+    <!-- STATUS: CANCELED -->
+    <div id="state-canceled" class="hidden card" style="text-align:center;padding:64px 32px;">
+      <div style="font-size:3rem;margin-bottom:16px;">❌</div>
+      <h3 style="color:var(--red);margin-bottom:8px;">Payment Canceled</h3>
+      <p style="font-size:.85rem;margin-bottom:24px;">This transaction was canceled or has expired.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <a href="/dashboard.html" class="btn btn-secondary">Dashboard</a>
+        <a href="/index.html" class="btn btn-primary">Order Again</a>
+      </div>
+    </div>
+
+    <!-- STATUS: NOT FOUND -->
+    <div id="state-notfound" class="hidden card" style="text-align:center;padding:64px 32px;">
+      <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
+      <h3 style="margin-bottom:8px;">Transaction Not Found</h3>
+      <p style="font-size:.85rem;margin-bottom:24px;">We couldn't find a transaction with that ID.</p>
+      <a href="/index.html" class="btn btn-primary">Back to Store</a>
+    </div>
+
+    <!-- Manual check -->
+    <div id="manual-check" class="hidden" style="margin-top:20px;text-align:center;">
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px;">Already paid but not confirmed?</div>
+      <button class="btn btn-ghost btn-sm" onclick="manualCheck()">Check Payment Status</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/app.js"></script>
+<script>
+let _txId, _timerInterval;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  await renderNavbar('');
+
+  const params = new URLSearchParams(window.location.search);
+  _txId = params.get('txid') || params.get('transaction_id');
+
+  if (!_txId) {
+    showState('notfound');
+    return;
+  }
+
+  // Initial check
+  await checkStatus();
+});
+
+function showState(state) {
+  ['loading','pending','success','canceled','notfound'].forEach(s => {
+    const el = document.getElementById('state-' + s);
+    if (el) el.classList.toggle('hidden', s !== state);
+  });
+}
+
+async function checkStatus() {
+  try {
+    const res  = await fetch('/api/transaction/check', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ transaction_id: _txId })
+    });
+    const data = await res.json();
+
+    if (data.status === 'pending') {
+      // We need qr_string and amount — fetch from DB via a separate endpoint
+      await loadPendingView();
+    } else if (data.status === 'success') {
+      clearInterval(_timerInterval);
+      stopPaymentPolling();
+      showSuccess(data.panel_data);
+    } else if (data.status === 'canceled') {
+      clearInterval(_timerInterval);
+      stopPaymentPolling();
+      showState('canceled');
+    } else if (data.status === 'error') {
+      showState('notfound');
+    }
+  } catch {
+    toast('Failed to check payment status', 'error');
+    showState('notfound');
+  }
+}
+
+async function loadPendingView() {
+  // Load transaction details for QR display
+  try {
+    const res  = await fetch('/api/transaction/detail/' + _txId);
+    const data = await res.json();
+    if (!data || !data.qr_string) {
+      // fallback: show manual check only
+      showState('pending');
+      renderQR('', 0, ''); 
+      return;
+    }
+    showState('pending');
+    document.getElementById('pay-item').textContent   = data.item || 'Panel Order';
+    document.getElementById('pay-amount').textContent = 'Rp ' + Number(data.amount || 0).toLocaleString('id-ID');
+    renderQR(data.qr_string, data.amount, data.item);
+    document.getElementById('manual-check').classList.remove('hidden');
+    startTimer();
+    startPaymentPolling(_txId, data.amount,
+      (d) => { clearInterval(_timerInterval); showSuccess(d.panel_data); },
+      () => { clearInterval(_timerInterval); showState('canceled'); }
+    );
+  } catch {
+    showState('pending');
+    document.getElementById('manual-check').classList.remove('hidden');
+  }
+}
+
+function renderQR(qrString, amount, item) {
+  const canvas = document.getElementById('qr-canvas');
+  canvas.innerHTML = '';
+  if (!qrString) {
+    canvas.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.8rem;">QR unavailable</div>';
+    return;
+  }
+  new QRCode(canvas, {
+    text: qrString, width: 220, height: 220,
+    colorDark: '#000000', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function startTimer() {
+  let seconds = 600;
+  const el = document.getElementById('timer-text');
+  _timerInterval = setInterval(() => {
+    if (--seconds <= 0) {
+      clearInterval(_timerInterval);
+      stopPaymentPolling();
+      showState('canceled');
+      return;
+    }
+    if (el) {
+      const m = String(Math.floor(seconds/60)).padStart(2,'0');
+      const s = String(seconds % 60).padStart(2,'0');
+      el.textContent = `${m}:${s}`;
+    }
+  }, 1000);
+}
+
+function showSuccess(panelData) {
+  showState('success');
+  if (panelData) {
+    document.getElementById('success-creds').classList.remove('hidden');
+    const list = document.getElementById('creds-list');
+    list.innerHTML = `
+      <div class="copy-field">
+        <span style="color:var(--text-muted);min-width:80px;">Login URL</span>
+        <span style="font-family:var(--font-mono);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;">${panelData.login_url||'—'}</span>
+        <button onclick="copyToClipboard('${panelData.login_url||''}','Copied!')">Copy</button>
+      </div>
+      <div class="copy-field">
+        <span style="color:var(--text-muted);min-width:80px;">Username</span>
+        <span style="font-family:var(--font-mono);">${panelData.username||'—'}</span>
+        <button onclick="copyToClipboard('${panelData.username||''}','Copied!')">Copy</button>
+      </div>
+      <div class="copy-field">
+        <span style="color:var(--text-muted);min-width:80px;">Password</span>
+        <span style="font-family:var(--font-mono);">${panelData.password||'—'}</span>
+        <button onclick="copyToClipboard('${panelData.password||''}','Copied!')">Copy</button>
+      </div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Expires: ${panelData.expired_date||'—'}</div>
+    `;
+    if (panelData.login_url) {
+      document.getElementById('open-panel-link').innerHTML =
+        `<a href="${panelData.login_url}" target="_blank" class="btn btn-primary btn-full">Open Panel →</a>`;
+    }
+  }
+  toast('Payment confirmed! 🎉', 'success');
+}
+
+async function cancelCurrentPayment() {
+  stopPaymentPolling();
+  clearInterval(_timerInterval);
+  await fetch('/api/transaction/cancel', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ transaction_id: _txId })
+  }).catch(()=>{});
+  showState('canceled');
+}
+
+async function manualCheck() {
+  toast('Checking…', 'info', 2000);
+  await checkStatus();
+}
+</script>
+</body>
+</html>

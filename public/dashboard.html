@@ -1,88 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - PanelShop</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — AmanePanel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">
-                <i class="fas fa-server"></i>
-                <span>PanelShop</span>
-            </a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/dashboard.html" class="active">Dashboard</a>
-                <a href="/profile.html">Profile</a>
-                <a href="/garansi.html">Garansi</a>
-                <a href="#" id="logoutBtn">Logout</a>
-            </div>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="layout-with-sidebar">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header flex justify-between items-center">
+      <div>
+        <div class="page-title">
+          <div class="title-icon">📊</div>
+          Dashboard
         </div>
-    </nav>
-
-    <div class="dashboard-container">
-        <div class="sidebar">
-            <div class="user-info">
-                <img id="userAvatar" src="/img/default-avatar.png" alt="Avatar">
-                <h3 id="userName">Loading...</h3>
-                <p id="userEmail"></p>
-            </div>
-            <div class="sidebar-menu">
-                <button class="menu-btn active" data-tab="order">
-                    <i class="fas fa-shopping-cart"></i> Order Panel
-                </button>
-                <button class="menu-btn" data-tab="my-panels">
-                    <i class="fas fa-server"></i> My Panels
-                </button>
-                <button class="menu-btn" data-tab="history">
-                    <i class="fas fa-history"></i> Order History
-                </button>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <!-- Order Tab -->
-            <div id="orderTab" class="tab-content active">
-                <h2>Order New Panel</h2>
-                <div class="products-grid" id="productsGrid">
-                    <!-- Products will be loaded here -->
-                </div>
-            </div>
-
-            <!-- My Panels Tab -->
-            <div id="myPanelsTab" class="tab-content">
-                <h2>My Panels</h2>
-                <div id="myPanelsList" class="panels-list">
-                    <!-- User panels will be loaded here -->
-                </div>
-            </div>
-
-            <!-- History Tab -->
-            <div id="historyTab" class="tab-content">
-                <h2>Order History</h2>
-                <div id="historyList" class="history-list">
-                    <!-- Order history will be loaded here -->
-                </div>
-            </div>
-        </div>
+        <div class="page-subtitle" id="welcome-text">Loading…</div>
+      </div>
+      <a href="/index.html" class="btn btn-primary">+ Order Panel</a>
     </div>
 
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Complete Payment</h2>
-            <div id="paymentContent">
-                <!-- Payment details will be inserted here -->
-            </div>
-        </div>
+    <!-- STATS -->
+    <div class="grid-4 mb-32" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon accent">🖥</div>
+        <div><div class="stat-value" id="stat-panels">—</div><div class="stat-label">Active Panels</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div><div class="stat-value" id="stat-orders">—</div><div class="stat-label">Total Orders</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">⏳</div>
+        <div><div class="stat-value" id="stat-expiring">—</div><div class="stat-label">Expiring Soon</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">🛡</div>
+        <div><div class="stat-value" id="stat-warranty">Active</div><div class="stat-label">Warranty Status</div></div>
+      </div>
     </div>
 
-    <script src="/js/dashboard.js"></script>
+    <!-- TABS -->
+    <div class="tabs mb-24" id="dash-tabs">
+      <button class="tab-btn active" data-tab="tab-panels">🖥 My Panels</button>
+      <button class="tab-btn" data-tab="tab-history">🕐 History</button>
+    </div>
+
+    <!-- PANEL TAB -->
+    <div id="tab-panels" class="tab-pane active">
+      <div id="panels-content">
+        <div class="card" style="text-align:center;padding:48px;">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+          <p style="font-size:.85rem;color:var(--text-muted);">Loading panels…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="tab-pane">
+      <div class="section-header">
+        <div class="section-title">Transaction History</div>
+        <div id="history-filter" style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-secondary" onclick="filterHistory('all')">All</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterHistory('success')">Success</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterHistory('pending')">Pending</button>
+        </div>
+      </div>
+      <div id="history-content">
+        <div class="card" style="text-align:center;padding:48px;">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- PANEL DETAIL MODAL -->
+<div class="modal-overlay" id="panel-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title">Panel Details</h3>
+      <button class="modal-close" onclick="closePanelModal()">✕</button>
+    </div>
+    <div id="panel-modal-body"></div>
+  </div>
+</div>
+
+<!-- RENEW MODAL -->
+<div class="modal-overlay" id="renew-modal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-header">
+      <h3 class="modal-title">Renew Panel</h3>
+      <button class="modal-close" onclick="closeRenew()">✕</button>
+    </div>
+    <div id="renew-body"></div>
+  </div>
+</div>
+
+<!-- PAY MODAL (QR) -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-header">
+      <h3 class="modal-title">Complete Payment</h3>
+      <button class="modal-close" onclick="cancelPayment()">✕</button>
+    </div>
+    <div id="pay-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/app.js"></script>
+<script>
+let _user, _profile, _panels = [], _history = [], _allProducts = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  const auth = await requireAuth('/index.html');
+  if (!auth) return;
+  _user    = auth.session.user;
+  _profile = auth.profile;
+
+  await renderNavbar('dashboard');
+  renderSidebar('overview');
+
+  document.getElementById('welcome-text').textContent =
+    'Welcome back, ' + (_profile?.full_name || _user.email) + ' 👋';
+
+  // Load tab data
+  initTabs('#dash-tabs');
+  await Promise.all([loadPanels(), loadHistory(), loadProducts()]);
+  updateStats();
+});
+
+async function loadProducts() {
+  try {
+    const res = await fetch('/api/products');
+    _allProducts = await res.json();
+  } catch {}
+}
+
+async function loadPanels() {
+  const phone = _profile?.phone || '';
+  try {
+    const res = await fetch('/api/my-panels/' + encodeURIComponent(phone));
+    _panels = await res.json() || [];
+    renderPanels();
+  } catch (e) { document.getElementById('panels-content').innerHTML = '<div class="alert alert-error">Failed to load panels</div>'; }
+}
+
+async function loadHistory() {
+  const phone = _profile?.phone || '';
+  try {
+    const res = await fetch('/api/history/' + encodeURIComponent(phone));
+    _history = await res.json() || [];
+    renderHistory(_history);
+  } catch {}
+}
+
+function updateStats() {
+  const active   = _panels.filter(p => p.status === 'active').length;
+  const expiring = _panels.filter(p => {
+    const { days } = expiryStatus(p.expired_date);
+    return days >= 0 && days <= 3;
+  }).length;
+  document.getElementById('stat-panels').textContent    = active;
+  document.getElementById('stat-orders').textContent    = _history.filter(h => h.status === 'success').length;
+  document.getElementById('stat-expiring').textContent  = expiring;
+  document.getElementById('stat-warranty').textContent  = active > 0 ? 'Active' : 'None';
+  document.getElementById('stat-warranty').closest('.stat-card').querySelector('.stat-icon').className =
+    'stat-icon ' + (active > 0 ? 'green' : 'red');
+}
+
+// ── PANELS ─────────────────────────────────────────
+function renderPanels() {
+  const el = document.getElementById('panels-content');
+  if (!_panels.length) {
+    el.innerHTML = `
+      <div class="empty-state card">
+        <div class="empty-icon">🖥</div>
+        <div class="empty-title">No panels yet</div>
+        <div class="empty-desc">Order your first Pterodactyl panel to get started</div>
+        <a href="/index.html" class="btn btn-primary mt-16">Browse Packages</a>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="grid-2">${_panels.map(p => panelCard(p)).join('')}</div>`;
+}
+
+function panelCard(p) {
+  const { label, badge, days } = expiryStatus(p.expired_date);
+  const statusCls = { active:'badge-active', suspended:'badge-suspended', deleted:'badge-canceled' };
+  return `
+    <div class="card card-glow" style="cursor:pointer;" onclick="openPanelDetail('${p.server_id || p.username}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-size:.7rem;color:var(--accent);font-weight:700;letter-spacing:.08em;margin-bottom:4px;">PTERODACTYL</div>
+          <div style="font-size:1.05rem;font-weight:700;color:var(--text-bright);">@${p.username}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <span class="badge ${statusCls[p.status]||'badge-info'} badge-dot">${p.status}</span>
+          <span class="badge ${badge}">${label}</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:var(--bg-3);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+          <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">RAM</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);">${formatMB(p.ram||512)}</div>
+        </div>
+        <div style="background:var(--bg-3);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+          <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">DISK</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);">${formatMB(p.disk||1024)}</div>
+        </div>
+        <div style="background:var(--bg-3);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+          <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">CPU</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);">${formatCPU(p.cpu||100)}</div>
+        </div>
+      </div>
+
+      <!-- Expiry bar -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">
+          <span>Expires ${formatDate(p.expired_date)}</span>
+          <span>${days}d remaining</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${Math.min(100, Math.max(0, (days/30)*100))}%;
+            background: ${days<=3?'var(--red)':days<=7?'var(--amber)':'linear-gradient(90deg,var(--accent),var(--green))'};"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        ${p.login_url ? `<a href="${p.login_url}" target="_blank" class="btn btn-primary btn-sm" style="flex:1;">Open Panel →</a>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openRenew('${p.username}')" style="flex:1;">🔄 Renew</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── PANEL DETAIL ──────────────────────────────────
+function openPanelDetail(id) {
+  const p = _panels.find(x => (x.server_id == id || x.username === id));
+  if (!p) return;
+  const body = document.getElementById('panel-modal-body');
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="grid-2" style="gap:12px;">
+        <div style="background:var(--bg-3);padding:16px;border-radius:var(--radius-md);">
+          <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:4px;">STATUS</div>
+          <div>${statusBadge(p.status)}</div>
+        </div>
+        <div style="background:var(--bg-3);padding:16px;border-radius:var(--radius-md);">
+          <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:4px;">EXPIRES</div>
+          <div style="font-size:.9rem;font-weight:600;">${formatDate(p.expired_date)}</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Login URL</div>
+        <div class="copy-field">${p.login_url||'—'}<button onclick="copyToClipboard('${p.login_url||''}','URL copied!')">Copy</button></div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Username</div>
+        <div class="copy-field">${p.username}<button onclick="copyToClipboard('${p.username}','Copied!')">Copy</button></div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Password</div>
+        <div class="copy-field" id="pw-field">
+          <span id="pw-text">••••••••</span>
+          <button onclick="toggleRevealPw()">Show</button>
+          <button onclick="copyToClipboard('${p.password||''}','Password copied!')">Copy</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${p.login_url ? `<a href="${p.login_url}" target="_blank" class="btn btn-primary" style="flex:1;">Open Panel →</a>` : ''}
+        <button class="btn btn-secondary" onclick="closePanelModal(); openRenew('${p.username}')" style="flex:1;">🔄 Renew</button>
+        <a href="/garansi.html" class="btn btn-ghost" style="flex:1;">🛡 Warranty</a>
+      </div>
+
+      <div class="alert alert-info" style="font-size:.8rem;">
+        🛡 Warranty is active as long as your panel is not expired. You can claim unlimited times.
+      </div>
+    </div>
+  `;
+  // Store password for reveal
+  document._currentPw = p.password;
+  document.getElementById('panel-modal').classList.add('open');
+}
+function closePanelModal() { document.getElementById('panel-modal').classList.remove('open'); }
+function toggleRevealPw() {
+  const el = document.getElementById('pw-text');
+  el.textContent = el.textContent === '••••••••' ? (document._currentPw || '—') : '••••••••';
+}
+
+// ── RENEW ─────────────────────────────────────────
+function openRenew(username) {
+  const p = _panels.find(x => x.username === username);
+  if (!p) return;
+  const renewProducts = _allProducts.filter(x => x.category === 'panel');
+  document.getElementById('renew-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px;text-align:left;">
+      <p style="font-size:.85rem;color:var(--text-secondary);">
+        Renew panel <strong style="color:var(--accent)">@${username}</strong> for another 30 days.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Select Package</label>
+        <select class="form-select" id="renew-product">
+          ${renewProducts.map(pr => `<option value="${pr.id}">${pr.name} — Rp ${Number(pr.price).toLocaleString('id-ID')}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitRenew('${username}')">Pay QRIS →</button>
+    </div>
+  `;
+  document.getElementById('renew-modal').classList.add('open');
+}
+function closeRenew() { document.getElementById('renew-modal').classList.remove('open'); }
+
+async function submitRenew(username) {
+  const productId = document.getElementById('renew-product').value;
+  const res = await fetch('/api/panel/renew', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ username, phone: _profile?.phone || '', productId })
+  });
+  const data = await res.json();
+  if (!data.success) { toast(data.message, 'error'); return; }
+  closeRenew();
+  openPayment(data.qr_string, data.transaction_id, data.amount);
+}
+
+// ── HISTORY ────────────────────────────────────────
+let _historyAll = [];
+function renderHistory(records) {
+  _historyAll = records;
+  const el = document.getElementById('history-content');
+  if (!records.length) {
+    el.innerHTML = `<div class="empty-state card"><div class="empty-icon">🕐</div><div class="empty-title">No transactions yet</div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Item</th><th>Amount</th><th>Status</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${records.map(h => `
+            <tr>
+              <td class="td-mono" style="font-size:.75rem;">${h.transaction_id}</td>
+              <td>${h.item || '—'}</td>
+              <td class="td-mono">Rp ${Number(h.amount||0).toLocaleString('id-ID')}</td>
+              <td>${statusBadge(h.status)}</td>
+              <td style="font-size:.8rem;color:var(--text-muted);">${formatDate(h.time)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function filterHistory(status) {
+  const filtered = status === 'all' ? _historyAll : _historyAll.filter(h => h.status === status);
+  renderHistory(filtered);
+}
+
+// ── QR PAYMENT ─────────────────────────────────────
+function openPayment(qrString, txId, amount) {
+  document.getElementById('pay-body').innerHTML = `
+    <div class="qr-wrapper">
+      <div style="font-size:.8rem;color:var(--text-muted);">Total Payment</div>
+      <div class="qr-amount">Rp ${Number(amount).toLocaleString('id-ID')}</div>
+      <div id="qr-canvas" style="background:#fff;padding:12px;border-radius:8px;"></div>
+      <div class="qr-status"><div class="spin"></div><span>Waiting for payment…</span></div>
+      <div class="qr-timer">⏱ <span id="timer-count">10:00</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="cancelPayment()">Cancel</button>
+    </div>
+  `;
+  new QRCode(document.getElementById('qr-canvas'), {
+    text: qrString, width: 200, height: 200,
+    colorDark: '#000', colorLight: '#fff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  document.getElementById('pay-modal').classList.add('open');
+
+  let sec = 600;
+  const timer = document.getElementById('timer-count');
+  const interval = setInterval(() => {
+    if (--sec <= 0) { clearInterval(interval); cancelPayment(); return; }
+    if (timer) timer.textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+  }, 1000);
+
+  startPaymentPolling(txId, amount,
+    async () => {
+      clearInterval(interval);
+      document.getElementById('pay-modal').classList.remove('open');
+      toast('Payment confirmed! 🎉', 'success');
+      await Promise.all([loadPanels(), loadHistory()]);
+      updateStats();
+    },
+    (reason) => {
+      clearInterval(interval);
+      document.getElementById('pay-modal').classList.remove('open');
+      toast(reason === 'timeout' ? 'Payment timed out' : 'Canceled', 'error');
+    }
+  );
+}
+
+async function cancelPayment() {
+  stopPaymentPolling();
+  document.getElementById('pay-modal').classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
 </body>
 </html>

@@ -1,81 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - PanelShop</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — AmanePanel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">
-                <i class="fas fa-server"></i>
-                <span>PanelShop</span>
-            </a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/dashboard.html">Dashboard</a>
-                <a href="/profile.html" class="active">Profile</a>
-                <a href="#" id="logoutBtn">Logout</a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="profile-container">
-        <div class="profile-card">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    <img id="profileAvatar" src="/img/default-avatar.png" alt="Avatar">
-                    <button id="changeAvatarBtn" class="avatar-btn">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                </div>
-                <h2 id="profileName">Loading...</h2>
-                <p id="profileEmail"></p>
-            </div>
-            <div class="profile-info">
-                <div class="info-group">
-                    <label>Username</label>
-                    <p id="profileUsername"></p>
-                </div>
-                <div class="info-group">
-                    <label>Member Since</label>
-                    <p id="profileJoined"></p>
-                </div>
-                <div class="info-group">
-                    <label>Total Orders</label>
-                    <p id="totalOrders">0</p>
-                </div>
-                <div class="info-group">
-                    <label>Active Panels</label>
-                    <p id="activePanels">0</p>
-                </div>
-            </div>
-            <div class="profile-actions">
-                <button id="changePasswordBtn" class="btn-secondary">
-                    <i class="fas fa-key"></i> Change Password
-                </button>
-            </div>
-        </div>
+<nav class="navbar" id="navbar"></nav>
+
+<div class="layout-with-sidebar">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main-content">
+
+    <div class="page-header">
+      <div class="page-title"><div class="title-icon">👤</div>Profile</div>
+      <div class="page-subtitle">Manage your account settings</div>
     </div>
 
-    <!-- Change Password Modal -->
-    <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Change Password</h2>
-            <form id="changePasswordForm">
-                <input type="password" placeholder="Current Password" required>
-                <input type="password" placeholder="New Password" required>
-                <input type="password" placeholder="Confirm New Password" required>
-                <button type="submit" class="btn-primary">Update Password</button>
-            </form>
+    <div class="grid-2" style="gap:24px; align-items: start;">
+
+      <!-- LEFT: Avatar + Info -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card" style="text-align:center;padding:32px;">
+          <div id="avatar-wrap" style="position:relative;width:96px;height:96px;margin:0 auto 16px;">
+            <img id="profile-avatar"
+              src="https://ui-avatars.com/api/?background=0c0c14&color=00e5ff&size=128"
+              style="width:96px;height:96px;border-radius:50%;border:3px solid var(--border-bright);object-fit:cover;"
+              onerror="this.src='https://ui-avatars.com/api/?background=0c0c14&color=00e5ff&size=128'" />
+            <label for="avatar-input"
+              style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-radius:50%;
+                     background:var(--accent);color:var(--bg-0);display:flex;align-items:center;
+                     justify-content:center;cursor:pointer;font-size:.8rem;border:2px solid var(--bg-2);"
+              title="Change avatar">✏</label>
+            <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)" />
+          </div>
+          <div id="profile-name" style="font-size:1.1rem;font-weight:700;color:var(--text-bright);">—</div>
+          <div id="profile-email" style="font-size:.82rem;color:var(--text-muted);margin-top:4px;">—</div>
+          <div id="profile-username" style="font-size:.78rem;color:var(--accent);margin-top:4px;font-family:var(--font-mono);">—</div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">MEMBER SINCE</div>
+            <div id="profile-joined" style="font-size:.85rem;color:var(--text-secondary);">—</div>
+          </div>
         </div>
+
+        <!-- Quick links -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Quick Links</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="/dashboard.html" class="sidebar-link">📊 Dashboard</a>
+            <a href="/garansi.html" class="sidebar-link">🛡 Warranty Claims</a>
+            <a href="/index.html" class="sidebar-link">🛍 Buy Panel</a>
+            <button class="sidebar-link" onclick="signOut()" style="border:none;cursor:pointer;background:none;text-align:left;width:100%;">🚪 Sign Out</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Edit form + Security -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Edit Profile -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Edit Profile</div>
+              <div class="card-subtitle">Update your display information</div>
+            </div>
+          </div>
+          <form id="profile-form" onsubmit="saveProfile(event)" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" type="text" id="edit-name" placeholder="Your full name" />
+              <div class="form-help" id="name-cd">You can change your name once every 7 days.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone / WhatsApp</label>
+              <input class="form-input" type="tel" id="edit-phone" placeholder="08xxxxxxxxxx" />
+            </div>
+            <button class="btn btn-primary" type="submit" id="save-profile-btn">Save Changes</button>
+            <div id="profile-status"></div>
+          </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Security</div>
+              <div class="card-subtitle">Change your account password</div>
+            </div>
+          </div>
+          <form id="pw-form" onsubmit="changePassword(event)" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <div class="input-group">
+                <input class="form-input" type="password" id="new-pw" placeholder="min 8 chars" minlength="8" required />
+                <span class="input-suffix" onclick="togglePw('new-pw')">👁</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <input class="form-input" type="password" id="confirm-pw" placeholder="repeat password" required />
+            </div>
+            <button class="btn btn-secondary" type="submit">Update Password</button>
+            <div id="pw-status"></div>
+          </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card" style="border-color: rgba(255,61,107,0.3);">
+          <div class="card-title" style="color:var(--red);margin-bottom:14px;">Danger Zone</div>
+          <div class="alert alert-error" style="font-size:.8rem;margin-bottom:14px;">
+            ⚠️ Signing out will end your current session on all devices.
+          </div>
+          <button class="btn btn-danger" onclick="signOut()">Sign Out of Account</button>
+        </div>
+
+      </div>
     </div>
 
-    <script src="/js/profile.js"></script>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="/app.js"></script>
+<script>
+let _user, _profile;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  const auth = await requireAuth('/index.html');
+  if (!auth) return;
+  _user    = auth.session.user;
+  _profile = auth.profile;
+
+  await renderNavbar('profile');
+  renderSidebar('profile');
+  populateProfile();
+});
+
+function populateProfile() {
+  const p = _profile;
+  if (!p) return;
+
+  const avatarSrc = p.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(p.full_name||'U')}&background=0c0c14&color=00e5ff&size=128`;
+
+  document.getElementById('profile-avatar').src       = avatarSrc;
+  document.getElementById('profile-name').textContent = p.full_name || '—';
+  document.getElementById('profile-email').textContent= _user.email || '—';
+  document.getElementById('profile-username').textContent = p.username ? '@' + p.username : '';
+  document.getElementById('profile-joined').textContent   = formatDate(_user.created_at || p.created_at);
+
+  document.getElementById('edit-name').value  = p.full_name || '';
+  document.getElementById('edit-phone').value = p.phone || '';
+
+  // Check name cooldown
+  if (p.last_name_update) {
+    const msSince = Date.now() - new Date(p.last_name_update).getTime();
+    const daysLeft = Math.ceil(7 - msSince / 86400000);
+    if (daysLeft > 0) {
+      const nameInput = document.getElementById('edit-name');
+      nameInput.disabled = true;
+      document.getElementById('name-cd').textContent = `⏳ Name change available in ${daysLeft} days`;
+      document.getElementById('name-cd').className = 'form-error';
+    }
+  }
+}
+
+async function saveProfile(e) {
+  e.preventDefault();
+  const btn    = document.getElementById('save-profile-btn');
+  const status = document.getElementById('profile-status');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const newName  = document.getElementById('edit-name').value.trim();
+  const newPhone = document.getElementById('edit-phone').value.trim();
+
+  try {
+    // Update Supabase profile
+    const updates = { id: _user.id, updated_at: new Date().toISOString() };
+    if (newName  && newName  !== _profile?.full_name) { updates.full_name = newName; updates.last_name_update = new Date().toISOString(); }
+    if (newPhone && newPhone !== _profile?.phone) updates.phone = newPhone;
+
+    const { error } = await supabase.from('profiles').upsert(updates);
+    if (error) throw error;
+
+    // Also update legacy API
+    await fetch('/api/user/update', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: _profile?.username, newName, newProfilePic: _profile?.avatar_url })
+    }).catch(()=>{});
+
+    status.className = 'form-success';
+    status.textContent = '✓ Profile updated successfully';
+    toast('Profile saved!', 'success');
+
+    // Refresh
+    _profile = await getProfile(_user.id);
+    populateProfile();
+  } catch (err) {
+    status.className = 'form-error';
+    status.textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+  }
+}
+
+async function changePassword(e) {
+  e.preventDefault();
+  const np  = document.getElementById('new-pw').value;
+  const cp  = document.getElementById('confirm-pw').value;
+  const st  = document.getElementById('pw-status');
+  if (np !== cp) { st.className = 'form-error'; st.textContent = 'Passwords do not match'; return; }
+  const { error } = await supabase.auth.updateUser({ password: np });
+  if (error) { st.className = 'form-error'; st.textContent = error.message; return; }
+  st.className = 'form-success'; st.textContent = '✓ Password updated';
+  document.getElementById('pw-form').reset();
+  toast('Password changed!', 'success');
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('Image must be under 2MB', 'error'); return; }
+  const ext  = file.name.split('.').pop();
+  const path = `avatars/${_user.id}.${ext}`;
+  const { data, error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+  if (error) { toast(error.message, 'error'); return; }
+  const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+  const avatarUrl = urlData.publicUrl;
+  await supabase.from('profiles').upsert({ id: _user.id, avatar_url: avatarUrl });
+  document.getElementById('profile-avatar').src = avatarUrl;
+  toast('Avatar updated!', 'success');
+}
+
+function togglePw(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
 </body>
 </html>

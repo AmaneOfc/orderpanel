@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — AmanePanel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="layout-with-sidebar">
+
+  <!-- ADMIN SIDEBAR -->
+  <aside class="sidebar" id="admin-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Admin Panel</div>
+      <a class="sidebar-link active" data-tab="tab-overview"   onclick="showTab('overview')"   href="#">📊 Overview</a>
+      <a class="sidebar-link"        data-tab="tab-panels"     onclick="showTab('panels')"     href="#">🖥 Panels</a>
+      <a class="sidebar-link"        data-tab="tab-products"   onclick="showTab('products')"   href="#">📦 Products</a>
+      <a class="sidebar-link"        data-tab="tab-users"      onclick="showTab('users')"      href="#">👥 Users</a>
+      <a class="sidebar-link"        data-tab="tab-orders"     onclick="showTab('orders')"     href="#">🧾 Orders</a>
+      <a class="sidebar-link"        data-tab="tab-promo"      onclick="showTab('promo')"      href="#">🎟 Promo Codes</a>
+      <a class="sidebar-link"        data-tab="tab-settings"   onclick="showTab('settings')"   href="#">⚙️ Settings</a>
+    </div>
+    <div class="sidebar-section" style="margin-top:auto;">
+      <a class="sidebar-link" href="/index.html">🛍 Store</a>
+      <a class="sidebar-link" href="/dashboard.html">📊 Dashboard</a>
+      <button class="sidebar-link" onclick="signOut()" style="border:none;background:none;width:100%;text-align:left;cursor:pointer;color:var(--red);">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ════ OVERVIEW ════ -->
+    <div id="tab-overview" class="admin-tab">
+      <div class="page-header flex justify-between items-center">
+        <div>
+          <div class="page-title"><div class="title-icon">⚙️</div>Admin Overview</div>
+          <div class="page-subtitle">AmanePanel control center</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="refreshAll()">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <div class="grid-4 mb-32" id="admin-stats">
+        <div class="stat-card"><div class="stat-icon accent">🖥</div><div><div class="stat-value" id="s-panels">—</div><div class="stat-label">Total Panels</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div><div class="stat-value" id="s-users">—</div><div class="stat-label">Members</div></div></div>
+        <div class="stat-card"><div class="stat-icon amber">🧾</div><div><div class="stat-value" id="s-orders">—</div><div class="stat-label">Total Orders</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple">💰</div><div><div class="stat-value" id="s-revenue">—</div><div class="stat-label">Revenue (IDR)</div></div></div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">System Notifications</div>
+        </div>
+        <div id="notif-list" class="card">
+          <div class="spinner" style="margin:0 auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PANELS ════ -->
+    <div id="tab-panels" class="admin-tab hidden">
+      <div class="page-header flex justify-between items-center">
+        <div class="page-title"><div class="title-icon">🖥</div>All Panels</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="form-input" id="panel-search" placeholder="Search username…" style="width:220px;" oninput="filterPanels(this.value)" />
+        </div>
+      </div>
+      <div id="panels-table">
+        <div class="card" style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ PRODUCTS ════ -->
+    <div id="tab-products" class="admin-tab hidden">
+      <div class="page-header flex justify-between items-center">
+        <div class="page-title"><div class="title-icon">📦</div>Products</div>
+        <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+      </div>
+      <div id="products-table">
+        <div class="card" style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ USERS ════ -->
+    <div id="tab-users" class="admin-tab hidden">
+      <div class="page-header flex justify-between items-center">
+        <div class="page-title"><div class="title-icon">👥</div>Members</div>
+        <input class="form-input" id="user-search" placeholder="Search name/username…" style="width:220px;" oninput="filterUsers(this.value)" />
+      </div>
+      <div id="users-table">
+        <div class="card" style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ ORDERS ════ -->
+    <div id="tab-orders" class="admin-tab hidden">
+      <div class="page-header flex justify-between items-center">
+        <div class="page-title"><div class="title-icon">🧾</div>All Orders</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-secondary" onclick="filterOrders('all')">All</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterOrders('pending')">Pending</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterOrders('success')">Success</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterOrders('canceled')">Canceled</button>
+        </div>
+      </div>
+      <div id="orders-table">
+        <div class="card" style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ PROMO ════ -->
+    <div id="tab-promo" class="admin-tab hidden">
+      <div class="page-header flex justify-between items-center">
+        <div class="page-title"><div class="title-icon">🎟</div>Promo Codes</div>
+        <button class="btn btn-primary" onclick="openPromoModal()">+ Add Code</button>
+      </div>
+      <div id="promo-table">
+        <div class="card" style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ SETTINGS ════ -->
+    <div id="tab-settings" class="admin-tab hidden">
+      <div class="page-header">
+        <div class="page-title"><div class="title-icon">⚙️</div>Store Settings</div>
+        <div class="page-subtitle">Configure your store information</div>
+      </div>
+      <div class="grid-2" style="align-items:start;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Site Info</div></div>
+          <form id="settings-form" onsubmit="saveSettings(event)" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Store Name</label>
+              <input class="form-input" id="s-store-name" placeholder="AmanePanel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Store Link</label>
+              <input class="form-input" id="s-store-link" placeholder="https://t.me/yourstore" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp</label>
+              <input class="form-input" id="s-wa" placeholder="628xxx" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telegram Channel</label>
+              <input class="form-input" id="s-tg" placeholder="@channel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Announcement</label>
+              <textarea class="form-textarea" id="s-announcement" rows="3" placeholder="Shown on store homepage…"></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Save Settings</button>
+          </form>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;">Pterodactyl Config</div>
+            <div id="ptero-info" style="display:flex;flex-direction:column;gap:10px;font-size:.83rem;font-family:var(--font-mono);">
+              <div class="text-muted">Loading…</div>
+            </div>
+          </div>
+          <div class="card" style="border-color:rgba(255,61,107,0.3);">
+            <div class="card-title" style="color:var(--red);margin-bottom:14px;">Danger</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <button class="btn btn-danger btn-sm" onclick="triggerBackup()">📦 Backup to Telegram</button>
+              <div class="form-help">Sends a full backup ZIP to owner Telegram.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="product-modal-title">Add Product</h3>
+      <button class="modal-close" onclick="closeProductModal()">✕</button>
+    </div>
+    <form id="product-form" onsubmit="saveProduct(event)" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input class="form-input" id="p-name" placeholder="Starter Panel" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="p-category" onchange="toggleProductFields()">
+            <option value="panel">Panel</option>
+            <option value="script">Script</option>
+            <option value="rental">Rental Bot</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price (IDR)</label>
+        <input class="form-input" type="number" id="p-price" placeholder="15000" required min="0" />
+      </div>
+
+      <!-- Panel-specific -->
+      <div id="panel-fields">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">RAM (MB) <span style="color:var(--text-muted);font-size:.72rem;">0=unlimited</span></label>
+            <input class="form-input" type="number" id="p-ram" placeholder="512" value="512" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Disk (MB)</label>
+            <input class="form-input" type="number" id="p-disk" placeholder="1024" value="1024" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">CPU (%)</label>
+            <input class="form-input" type="number" id="p-cpu" placeholder="100" value="100" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mode</label>
+            <select class="form-select" id="p-mode">
+              <option value="1">1 — Auto</option>
+              <option value="2">2 — Manual</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Custom Ptero Domain</label>
+            <input class="form-input" id="p-domain" placeholder="Leave blank for default" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Egg ID</label>
+            <input class="form-input" id="p-egg" placeholder="15" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Script-specific -->
+      <div id="script-fields" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Download URL</label>
+          <input class="form-input" id="p-download" placeholder="https://…" />
+        </div>
+      </div>
+
+      <!-- Rental-specific -->
+      <div id="rental-fields" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Duration (days)</label>
+          <input class="form-input" type="number" id="p-duration" placeholder="30" value="30" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="p-desc" rows="2" placeholder="Bot description…"></textarea>
+        </div>
+      </div>
+
+      <div id="p-error" class="form-error hidden"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" type="submit" id="save-product-btn" style="flex:1;">Save Product</button>
+        <button class="btn btn-ghost" type="button" onclick="closeProductModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PROMO MODAL -->
+<div class="modal-overlay" id="promo-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Promo Code</h3>
+      <button class="modal-close" onclick="closePromoModal()">✕</button>
+    </div>
+    <form id="promo-form" onsubmit="savePromo(event)" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Code</label>
+          <input class="form-input" id="pr-code" placeholder="SALE20" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discount %</label>
+          <input class="form-input" type="number" id="pr-discount" placeholder="20" min="1" max="100" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Max Uses (0=∞)</label>
+          <input class="form-input" type="number" id="pr-limit" placeholder="100" value="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="pr-cat">
+            <option value="all">All</option>
+            <option value="panel">Panel</option>
+            <option value="script">Script</option>
+            <option value="rental">Rental</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Expiry Date (optional)</label>
+        <input class="form-input" type="date" id="pr-exp" />
+      </div>
+      <button class="btn btn-primary btn-full" type="submit">Create Code</button>
+    </form>
+  </div>
+</div>
+
+<!-- PANEL ACTION MODAL -->
+<div class="modal-overlay" id="panel-action-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="pam-title">Panel Action</h3>
+      <button class="modal-close" onclick="document.getElementById('panel-action-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="pam-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/app.js"></script>
+<script>
+let _adminData = { panels:[], users:[], orders:[], products:[], promos:[], settings:{} };
+let _editProductId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  // Admin guard: check admin PIN or Supabase admin role
+  const pinKey = sessionStorage.getItem('amane_admin');
+  if (!pinKey) {
+    const pin = prompt('Enter Admin PIN:');
+    if (!pin) { window.location.href = '/index.html'; return; }
+    const res = await fetch('/api/admin/verify', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pin })
+    });
+    const data = await res.json();
+    if (!data.success) { alert('Invalid PIN'); window.location.href = '/index.html'; return; }
+    sessionStorage.setItem('amane_admin', '1');
+  }
+
+  await renderNavbar('admin');
+  await refreshAll();
+  showTab('overview');
+});
+
+async function refreshAll() {
+  await Promise.all([
+    loadAdminPanels(), loadAdminUsers(), loadAdminOrders(),
+    loadAdminProducts(), loadAdminPromos(), loadAdminSettings()
+  ]);
+  updateAdminStats();
+  renderNotifications();
+}
+
+// ── TAB SWITCHING ──────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+  document.querySelectorAll('#admin-sidebar .sidebar-link').forEach(l => l.classList.remove('active'));
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.remove('hidden');
+  const link = document.querySelector(`[data-tab="tab-${name}"]`);
+  if (link) link.classList.add('active');
+
+  // Lazy render
+  if (name === 'panels')   renderPanelsTable(_adminData.panels);
+  if (name === 'products') renderProductsTable(_adminData.products);
+  if (name === 'users')    renderUsersTable(_adminData.users);
+  if (name === 'orders')   renderOrdersTable(_adminData.orders);
+  if (name === 'promo')    renderPromoTable(_adminData.promos);
+  if (name === 'settings') renderSettings();
+  return false;
+}
+
+// ── DATA LOADERS ───────────────────────────────────
+async function loadAdminPanels() {
+  const r = await fetch('/api/admin/panels', { headers: adminHeaders() });
+  if (r.ok) _adminData.panels = await r.json();
+}
+async function loadAdminUsers() {
+  const r = await fetch('/api/admin/users', { headers: adminHeaders() });
+  if (r.ok) _adminData.users = await r.json();
+}
+async function loadAdminOrders() {
+  const r = await fetch('/api/admin/orders', { headers: adminHeaders() });
+  if (r.ok) _adminData.orders = await r.json();
+}
+async function loadAdminProducts() {
+  const r = await fetch('/api/products');
+  if (r.ok) _adminData.products = await r.json();
+}
+async function loadAdminPromos() {
+  const r = await fetch('/api/admin/promos', { headers: adminHeaders() });
+  if (r.ok) _adminData.promos = await r.json();
+}
+async function loadAdminSettings() {
+  const r = await fetch('/api/admin/site-info', { headers: adminHeaders() });
+  if (r.ok) { const d = await r.json(); _adminData.settings = d; }
+}
+
+function adminHeaders() {
+  return { 'x-admin-pin': sessionStorage.getItem('amane_admin') || '' };
+}
+
+// ── STATS ──────────────────────────────────────────
+function updateAdminStats() {
+  document.getElementById('s-panels').textContent  = _adminData.panels.filter(p => p.status !== 'deleted').length;
+  document.getElementById('s-users').textContent   = _adminData.users.length;
+  document.getElementById('s-orders').textContent  = _adminData.orders.filter(o => o.status === 'success').length;
+  const rev = _adminData.orders.filter(o => o.status === 'success').reduce((a,o) => a + (o.amount||0), 0);
+  document.getElementById('s-revenue').textContent = 'Rp ' + Math.floor(rev/1000) + 'K';
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────
+function renderNotifications() {
+  const el = document.getElementById('notif-list');
+  const notifs = (_adminData.settings.notifications || []).slice(0, 10);
+  if (!notifs.length) {
+    el.innerHTML = '<div class="text-muted" style="font-size:.85rem;padding:8px;">No notifications.</div>';
+    return;
+  }
+  el.innerHTML = notifs.map(n => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--accent-glow);
+        display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem;">🔔</div>
+      <div>
+        <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);">${n.title||'Notification'}</div>
+        <div style="font-size:.8rem;color:var(--text-secondary);margin-top:2px;">${n.msg}</div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px;">${timeAgo(n.time)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── PANELS TABLE ───────────────────────────────────
+let _panelsAll = [];
+function renderPanelsTable(panels) {
+  _panelsAll = panels;
+  const el = document.getElementById('panels-table');
+  if (!panels.length) {
+    el.innerHTML = '<div class="empty-state card"><div class="empty-icon">🖥</div><div class="empty-title">No panels</div></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Username</th><th>Status</th><th>Expires</th><th>RAM/CPU</th><th>Phone</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          ${panels.slice(0,50).map(p => `
+            <tr>
+              <td style="font-weight:600;color:var(--text-primary);">@${p.username}</td>
+              <td>${statusBadge(p.status)}</td>
+              <td style="font-size:.8rem;color:var(--text-muted);">${formatDate(p.expired_date)}</td>
+              <td class="td-mono">${formatMB(p.ram||512)} / ${formatCPU(p.cpu||100)}</td>
+              <td class="td-mono" style="font-size:.78rem;">${p.phone||'—'}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="btn btn-sm btn-secondary" onclick="viewPanelDetail('${p.username}')">Detail</button>
+                  ${p.status==='active'
+                    ? `<button class="btn btn-sm" style="background:var(--amber-glow);color:var(--amber);border:1px solid rgba(255,170,0,.3);" onclick="suspendPanel('${p.username}')">Suspend</button>`
+                    : `<button class="btn btn-sm btn-success" onclick="unsuspendPanel('${p.username}')">Unsuspend</button>`}
+                  <button class="btn btn-sm btn-danger" onclick="deletePanel('${p.username}')">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${panels.length > 50 ? `<div style="padding:12px 16px;font-size:.8rem;color:var(--text-muted);">Showing 50 of ${panels.length}</div>` : ''}
+  `;
+}
+
+function filterPanels(q) {
+  const filtered = _panelsAll.filter(p =>
+    p.username?.toLowerCase().includes(q.toLowerCase()) ||
+    p.phone?.includes(q)
+  );
+  renderPanelsTable(filtered);
+}
+
+function viewPanelDetail(username) {
+  const p = _panelsAll.find(x => x.username === username);
+  if (!p) return;
+  const modal = document.getElementById('panel-action-modal');
+  document.getElementById('pam-title').textContent = 'Panel: @' + p.username;
+  document.getElementById('pam-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="grid-2" style="gap:10px;">
+        <div style="background:var(--bg-3);padding:12px;border-radius:var(--radius-md);">
+          <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">STATUS</div>
+          <div>${statusBadge(p.status)}</div>
+        </div>
+        <div style="background:var(--bg-3);padding:12px;border-radius:var(--radius-md);">
+          <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">MODE</div>
+          <div style="font-size:.85rem;font-weight:600;">${p.mode==='auto'?'⚡ Auto':'🔧 Manual'}</div>
+        </div>
+      </div>
+      <div class="copy-field"><span style="color:var(--text-muted);min-width:70px;">Domain</span>${p.login_url||p.ptero_domain||'—'}<button onclick="copyToClipboard('${p.login_url||''}','Copied!')">Copy</button></div>
+      <div class="copy-field"><span style="color:var(--text-muted);min-width:70px;">Username</span>${p.username}<button onclick="copyToClipboard('${p.username}','Copied!')">Copy</button></div>
+      <div class="copy-field"><span style="color:var(--text-muted);min-width:70px;">Password</span>${p.password||'—'}<button onclick="copyToClipboard('${p.password||''}','Copied!')">Copy</button></div>
+      <div class="copy-field"><span style="color:var(--text-muted);min-width:70px;">Server ID</span>${p.server_id||'—'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.8rem;">
+        <div style="background:var(--bg-3);padding:10px;border-radius:var(--radius-sm);text-align:center;">
+          <div style="color:var(--text-muted);">RAM</div>
+          <div style="font-weight:700;font-family:var(--font-mono);">${formatMB(p.ram||512)}</div>
+        </div>
+        <div style="background:var(--bg-3);padding:10px;border-radius:var(--radius-sm);text-align:center;">
+          <div style="color:var(--text-muted);">DISK</div>
+          <div style="font-weight:700;font-family:var(--font-mono);">${formatMB(p.disk||1024)}</div>
+        </div>
+        <div style="background:var(--bg-3);padding:10px;border-radius:var(--radius-sm);text-align:center;">
+          <div style="color:var(--text-muted);">CPU</div>
+          <div style="font-weight:700;font-family:var(--font-mono);">${formatCPU(p.cpu||100)}</div>
+        </div>
+      </div>
+      <div style="font-size:.8rem;color:var(--text-muted);">
+        📅 Expires: ${formatDate(p.expired_date)}<br>
+        📱 Phone: ${p.phone||'—'}<br>
+        🕐 Created: ${p.created_at ? formatDate(p.created_at) : '—'}
+      </div>
+    </div>
+  `;
+  modal.classList.add('open');
+}
+
+async function suspendPanel(username) {
+  if (!confirm('Suspend @' + username + '?')) return;
+  const r = await fetch('/api/admin/panel/suspend', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ username })
+  });
+  const d = await r.json();
+  toast(d.success ? 'Suspended' : d.message, d.success ? 'success' : 'error');
+  if (d.success) await loadAdminPanels();
+  renderPanelsTable(_adminData.panels);
+}
+
+async function unsuspendPanel(username) {
+  const r = await fetch('/api/admin/panel/unsuspend', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ username })
+  });
+  const d = await r.json();
+  toast(d.success ? 'Unsuspended' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadAdminPanels(); renderPanelsTable(_adminData.panels); }
+}
+
+async function deletePanel(username) {
+  if (!confirm('Delete @' + username + '? This will remove the Pterodactyl server.')) return;
+  const r = await fetch('/api/admin/panel/delete', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ username })
+  });
+  const d = await r.json();
+  toast(d.success ? 'Deleted' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadAdminPanels(); renderPanelsTable(_adminData.panels); }
+}
+
+// ── PRODUCTS TABLE ─────────────────────────────────
+function renderProductsTable(products) {
+  const el = document.getElementById('products-table');
+  const ptProducts = products.filter(p => p.category === 'panel');
+  if (!ptProducts.length) {
+    el.innerHTML = '<div class="empty-state card"><div class="empty-icon">📦</div><div class="empty-title">No products</div><button class="btn btn-primary mt-16" onclick="openProductModal()">Add First Product</button></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Specs</th><th>Mode</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          ${products.map(p => `
+            <tr>
+              <td class="td-mono">#${p.id}</td>
+              <td style="font-weight:600;">${p.name}</td>
+              <td><span class="badge badge-info">${p.category}</span></td>
+              <td class="td-mono">Rp ${Number(p.price).toLocaleString('id-ID')}</td>
+              <td class="td-mono" style="font-size:.78rem;">
+                ${p.category==='panel' ? `${formatMB(p.ram||512)} / ${formatCPU(p.cpu||100)}` : '—'}
+              </td>
+              <td>
+                ${p.category==='panel'
+                  ? `<span style="font-size:.78rem;color:${p.mode===1?'var(--green)':'var(--amber)'};">${p.mode===1?'Auto':'Manual'}</span>`
+                  : '—'}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-sm btn-secondary" onclick="editProduct(${p.id})">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Del</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openProductModal(id = null) {
+  _editProductId = id;
+  document.getElementById('product-modal-title').textContent = id ? 'Edit Product' : 'Add Product';
+  if (id) {
+    const p = _adminData.products.find(x => x.id === id);
+    if (p) {
+      document.getElementById('p-name').value     = p.name;
+      document.getElementById('p-category').value = p.category;
+      document.getElementById('p-price').value    = p.price;
+      document.getElementById('p-ram').value      = p.ram  || 512;
+      document.getElementById('p-disk').value     = p.disk || 1024;
+      document.getElementById('p-cpu').value      = p.cpu  || 100;
+      document.getElementById('p-mode').value     = p.mode || 1;
+      document.getElementById('p-domain').value   = p.ptero_domain || '';
+      document.getElementById('p-egg').value      = p.egg_id || '';
+      document.getElementById('p-download').value = p.download_url || '';
+      document.getElementById('p-duration').value = p.duration_days || 30;
+      document.getElementById('p-desc').value     = p.description || '';
+      toggleProductFields();
+    }
+  } else {
+    document.getElementById('product-form').reset();
+    toggleProductFields();
+  }
+  document.getElementById('product-modal').classList.add('open');
+}
+function closeProductModal() { document.getElementById('product-modal').classList.remove('open'); _editProductId = null; }
+function editProduct(id) { openProductModal(id); }
+
+function toggleProductFields() {
+  const cat = document.getElementById('p-category').value;
+  document.getElementById('panel-fields').classList.toggle('hidden',  cat !== 'panel');
+  document.getElementById('script-fields').classList.toggle('hidden', cat !== 'script');
+  document.getElementById('rental-fields').classList.toggle('hidden', cat !== 'rental');
+}
+
+async function saveProduct(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-product-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const cat   = document.getElementById('p-category').value;
+  const body  = {
+    name:     document.getElementById('p-name').value.trim(),
+    category: cat,
+    price:    parseInt(document.getElementById('p-price').value),
+  };
+  if (cat === 'panel') {
+    body.ram    = parseInt(document.getElementById('p-ram').value)  || 512;
+    body.disk   = parseInt(document.getElementById('p-disk').value) || 1024;
+    body.cpu    = parseInt(document.getElementById('p-cpu').value)  || 100;
+    body.mode   = parseInt(document.getElementById('p-mode').value) || 1;
+    body.ptero_domain = document.getElementById('p-domain').value.trim() || null;
+    body.egg_id       = document.getElementById('p-egg').value.trim()    || null;
+  } else if (cat === 'script') {
+    body.download_url = document.getElementById('p-download').value.trim();
+  } else if (cat === 'rental') {
+    body.duration_days = parseInt(document.getElementById('p-duration').value) || 30;
+    body.description   = document.getElementById('p-desc').value.trim();
+  }
+
+  const url    = _editProductId ? '/api/admin/product/update' : '/api/admin/product/add';
+  if (_editProductId) body.id = _editProductId;
+  const r = await fetch(url, {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  toast(d.success ? (_editProductId ? 'Product updated' : 'Product added') : d.message, d.success ? 'success' : 'error');
+  if (d.success) { closeProductModal(); await loadAdminProducts(); renderProductsTable(_adminData.products); }
+  btn.disabled = false; btn.textContent = 'Save Product';
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  const r = await fetch('/api/admin/product/delete', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ id })
+  });
+  const d = await r.json();
+  toast(d.success ? 'Deleted' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadAdminProducts(); renderProductsTable(_adminData.products); }
+}
+
+// ── USERS TABLE ────────────────────────────────────
+let _usersAll = [];
+function renderUsersTable(users) {
+  _usersAll = users;
+  const el = document.getElementById('users-table');
+  if (!users.length) {
+    el.innerHTML = '<div class="empty-state card"><div class="empty-icon">👥</div><div class="empty-title">No members yet</div></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Username</th><th>Phone</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${users.slice(0,100).map(u => `
+            <tr>
+              <td style="font-weight:600;">${u.full_name||u.name||'—'}</td>
+              <td class="td-mono">@${u.username||'—'}</td>
+              <td class="td-mono" style="font-size:.8rem;">${u.phone||'—'}</td>
+              <td style="font-size:.78rem;color:var(--text-muted);">${u.joined_at||u.created_at ? formatDate(u.joined_at||u.created_at) : '—'}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.phone||u.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function filterUsers(q) {
+  const f = _usersAll.filter(u =>
+    (u.name||'').toLowerCase().includes(q.toLowerCase()) ||
+    (u.username||'').toLowerCase().includes(q.toLowerCase()) ||
+    (u.phone||'').includes(q)
+  );
+  renderUsersTable(f);
+}
+async function deleteUser(phone) {
+  if (!confirm('Delete user ' + phone + '?')) return;
+  const r = await fetch('/api/admin/user/delete', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ phone })
+  });
+  const d = await r.json();
+  toast(d.success ? 'User deleted' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadAdminUsers(); renderUsersTable(_adminData.users); }
+}
+
+// ── ORDERS TABLE ───────────────────────────────────
+let _ordersAll = [];
+function renderOrdersTable(orders) {
+  _ordersAll = orders;
+  const el = document.getElementById('orders-table');
+  if (!orders.length) {
+    el.innerHTML = '<div class="empty-state card"><div class="empty-icon">🧾</div><div class="empty-title">No orders</div></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Item</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          ${orders.slice(0,100).map(o => `
+            <tr>
+              <td class="td-mono" style="font-size:.73rem;">${o.transaction_id}</td>
+              <td style="font-size:.82rem;">${o.username||'—'}</td>
+              <td style="font-size:.82rem;max-width:180px;" class="truncate">${o.item||'—'}</td>
+              <td class="td-mono">Rp ${Number(o.amount||0).toLocaleString('id-ID')}</td>
+              <td>${statusBadge(o.status)}</td>
+              <td style="font-size:.78rem;color:var(--text-muted);">${formatDate(o.time)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function filterOrders(status) {
+  const f = status === 'all' ? _ordersAll : _ordersAll.filter(o => o.status === status);
+  renderOrdersTable(f);
+}
+
+// ── PROMO TABLE ────────────────────────────────────
+function renderPromoTable(promos) {
+  const el = document.getElementById('promo-table');
+  if (!promos.length) {
+    el.innerHTML = '<div class="empty-state card"><div class="empty-icon">🎟</div><div class="empty-title">No promo codes</div><button class="btn btn-primary mt-16" onclick="openPromoModal()">Create First Code</button></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Discount</th><th>Category</th><th>Used/Limit</th><th>Expires</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${promos.map(p => `
+            <tr>
+              <td class="td-mono" style="font-weight:700;color:var(--accent);">${p.code}</td>
+              <td style="font-weight:700;color:var(--green);">${p.discount}%</td>
+              <td><span class="badge badge-info">${p.valid_category||'all'}</span></td>
+              <td class="td-mono">${p.used||0} / ${p.limit===0?'∞':p.limit}</td>
+              <td style="font-size:.8rem;color:var(--text-muted);">${p.expired_at ? formatDate(p.expired_at) : '∞'}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" onclick="deletePromo('${p.code}')">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openPromoModal() { document.getElementById('promo-modal').classList.add('open'); }
+function closePromoModal() { document.getElementById('promo-modal').classList.remove('open'); }
+
+async function savePromo(e) {
+  e.preventDefault();
+  const body = {
+    code:           document.getElementById('pr-code').value.trim().toUpperCase(),
+    discount:       parseInt(document.getElementById('pr-discount').value),
+    limit:          parseInt(document.getElementById('pr-limit').value) || 0,
+    valid_category: document.getElementById('pr-cat').value,
+    expired_at:     document.getElementById('pr-exp').value || null,
+  };
+  const r = await fetch('/api/admin/promo/add', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  toast(d.success ? 'Promo code created' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { closePromoModal(); await loadAdminPromos(); renderPromoTable(_adminData.promos); }
+}
+
+async function deletePromo(code) {
+  if (!confirm('Delete promo code ' + code + '?')) return;
+  const r = await fetch('/api/admin/promo/delete', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify({ code })
+  });
+  const d = await r.json();
+  toast(d.success ? 'Deleted' : d.message, d.success ? 'success' : 'error');
+  if (d.success) { await loadAdminPromos(); renderPromoTable(_adminData.promos); }
+}
+
+// ── SETTINGS ──────────────────────────────────────
+function renderSettings() {
+  const s = _adminData.settings;
+  if (document.getElementById('s-store-name')) {
+    document.getElementById('s-store-name').value     = s.store_name        || '';
+    document.getElementById('s-store-link').value     = s.store_link        || '';
+    document.getElementById('s-wa').value             = s.social_whatsapp   || '';
+    document.getElementById('s-tg').value             = s.social_telegram   || '';
+    document.getElementById('s-announcement').value   = s.announcement      || '';
+  }
+  // Load Ptero defaults
+  fetch('/api/admin/env-defaults', { headers: adminHeaders() }).then(r => r.json()).then(d => {
+    document.getElementById('ptero-info').innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-3);border-radius:var(--radius-sm);">
+        <span style="color:var(--text-muted);">Domain</span>
+        <span style="color:var(--accent);">${d.ptero_domain||'not set'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-3);border-radius:var(--radius-sm);">
+        <span style="color:var(--text-muted);">Egg ID</span>
+        <span>${d.ptero_egg_id||'—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-3);border-radius:var(--radius-sm);">
+        <span style="color:var(--text-muted);">Duration</span>
+        <span>${d.panel_duration||30} days</span>
+      </div>
+    `;
+  }).catch(() => {});
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const body = {
+    store_name:      document.getElementById('s-store-name').value,
+    store_link:      document.getElementById('s-store-link').value,
+    social_whatsapp: document.getElementById('s-wa').value,
+    social_telegram: document.getElementById('s-tg').value,
+    announcement:    document.getElementById('s-announcement').value,
+  };
+  const r = await fetch('/api/admin/site-info', {
+    method:'POST', headers:{'Content-Type':'application/json',...adminHeaders()},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  toast(d.success ? 'Settings saved' : 'Failed', d.success ? 'success' : 'error');
+}
+
+async function triggerBackup() {
+  toast('Sending backup to Telegram…', 'info');
+  const r = await fetch('/api/admin/backup', { method:'POST', headers: adminHeaders() });
+  const d = await r.json();
+  toast(d.success ? 'Backup sent!' : 'Backup failed', d.success ? 'success' : 'error');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

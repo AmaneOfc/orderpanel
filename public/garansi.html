@@ -1,70 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garansi - PanelShop</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Garansi — AmanePanel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">
-                <i class="fas fa-server"></i>
-                <span>PanelShop</span>
-            </a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/dashboard.html">Dashboard</a>
-                <a href="/garansi.html" class="active">Garansi</a>
-                <a href="#" id="logoutBtn">Logout</a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="garansi-container">
-        <div class="garansi-header">
-            <i class="fas fa-shield-alt"></i>
-            <h1>Claim Warranty</h1>
-            <p>Get your panel reset or password changed for free</p>
-        </div>
+<nav class="navbar" id="navbar"></nav>
 
-        <div class="garansi-form">
-            <div class="form-group">
-                <label>Select Panel</label>
-                <select id="panelSelect">
-                    <option value="">Choose your panel...</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Issue Type</label>
-                <select id="issueType">
-                    <option value="password">Forgot Password</option>
-                    <option value="error">Panel Error</option>
-                    <option value="slow">Slow Performance</option>
-                    <option value="other">Other Issues</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="issueDesc" rows="4" placeholder="Describe your issue in detail..."></textarea>
-            </div>
-            <button id="claimGaransiBtn" class="btn-primary">Claim Warranty</button>
-        </div>
+<div class="layout-with-sidebar">
+  <aside class="sidebar" id="sidebar"></aside>
 
-        <div class="garansi-info">
-            <h3>Warranty Terms</h3>
-            <ul>
-                <li><i class="fas fa-check-circle"></i> Free warranty for all active panels</li>
-                <li><i class="fas fa-check-circle"></i> Password reset available anytime</li>
-                <li><i class="fas fa-check-circle"></i> Panel reinstall within 24 hours</li>
-                <li><i class="fas fa-check-circle"></i> Technical support included</li>
-            </ul>
-        </div>
+  <main class="main-content">
+
+    <div class="page-header">
+      <div class="page-title"><div class="title-icon">🛡</div>Warranty Claims</div>
+      <div class="page-subtitle">Unlimited warranty while your panel is active</div>
     </div>
 
-    <script src="/js/garansi.js"></script>
+    <!-- HOW IT WORKS -->
+    <div class="card mb-32" style="background: linear-gradient(135deg, var(--bg-2), var(--bg-3)); border-color: rgba(0,229,255,0.2);">
+      <div class="card-title" style="margin-bottom:16px;">How Warranty Works</div>
+      <div class="grid-3" style="gap:16px;">
+        <div style="text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:8px;">🔍</div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Find Your Order</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">Enter your Order ID from the transaction history</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:8px;">📝</div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Submit Claim</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">Describe the issue and submit your claim</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:8px;">⚡</div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Auto Reset</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">Panel is reset & extended automatically</div>
+        </div>
+      </div>
+      <div class="alert alert-info mt-16" style="font-size:.8rem;">
+        💡 Warranty is <strong>unlimited</strong> and valid as long as your panel hasn't expired. Expired panel = no warranty.
+      </div>
+    </div>
+
+    <div class="grid-2" style="align-items: start;">
+
+      <!-- CLAIM FORM -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Submit a Claim</div>
+            <div class="card-subtitle">Fill in the form below to request a warranty reset</div>
+          </div>
+        </div>
+
+        <form id="garansi-form" onsubmit="submitClaim(event)" style="display:flex;flex-direction:column;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Order ID <span style="color:var(--red)">*</span></label>
+            <input class="form-input" type="text" id="order-id"
+              placeholder="e.g. ORD1716000000000" required
+              oninput="validateOrderId(this.value)" />
+            <div id="order-id-status" class="form-help"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone / Username <span style="color:var(--red)">*</span></label>
+            <input class="form-input" type="text" id="claim-phone"
+              placeholder="08xxxxxxxxxx or @username" required />
+            <div class="form-help">Must match the number used during order</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Issue Description <span style="color:var(--red)">*</span></label>
+            <textarea class="form-textarea" id="claim-reason"
+              placeholder="Describe the problem with your panel…" required></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-full" type="submit" id="claim-btn">
+            🛡 Submit Warranty Claim
+          </button>
+          <div id="claim-status"></div>
+        </form>
+      </div>
+
+      <!-- CLAIM RESULT / INFO -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Result box (hidden until claim submitted) -->
+        <div id="claim-result" class="hidden">
+          <div class="card" style="border-color: rgba(0,255,136,0.3);">
+            <div style="text-align:center;padding:16px 0;">
+              <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
+              <div style="font-size:1rem;font-weight:700;color:var(--green);margin-bottom:8px;">Claim Processed!</div>
+              <div id="claim-result-msg" style="font-size:.85rem;color:var(--text-secondary);margin-bottom:20px;"></div>
+            </div>
+
+            <div id="new-creds" class="hidden">
+              <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">New Credentials</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div class="copy-field">
+                  <span>Username:</span> <span id="res-user" style="font-family:var(--font-mono);font-weight:600;"></span>
+                  <button onclick="copyToClipboard(document.getElementById('res-user').textContent,'Copied!')">Copy</button>
+                </div>
+                <div class="copy-field">
+                  <span>Password:</span> <span id="res-pw" style="font-family:var(--font-mono);font-weight:600;"></span>
+                  <button onclick="copyToClipboard(document.getElementById('res-pw').textContent,'Copied!')">Copy</button>
+                </div>
+                <div class="copy-field">
+                  <span>URL:</span> <span id="res-url" style="font-family:var(--font-mono);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;"></span>
+                  <button onclick="copyToClipboard(document.getElementById('res-url').textContent,'Copied!')">Copy</button>
+                </div>
+              </div>
+              <div id="res-exp" style="font-size:.78rem;color:var(--text-muted);margin-top:10px;"></div>
+            </div>
+
+            <button class="btn btn-ghost btn-full mt-16" onclick="resetClaim()">Submit Another Claim</button>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">❓ Warranty FAQ</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">When can I claim warranty?</div>
+              <div style="font-size:.8rem;color:var(--text-muted);">Anytime your panel is still active (not expired). Unlimited claims.</div>
+            </div>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">What happens after I claim?</div>
+              <div style="font-size:.8rem;color:var(--text-muted);">Your panel is reset with a new password, unsuspended, and extended by 30 days from today.</div>
+            </div>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Where do I find my Order ID?</div>
+              <div style="font-size:.8rem;color:var(--text-muted);">Check your <a href="/dashboard.html#history">Dashboard → History</a>. It starts with <span class="mono" style="font-size:.78rem;color:var(--accent);">ORD</span>.</div>
+            </div>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;">My panel expired. Can I still claim?</div>
+              <div style="font-size:.8rem;color:var(--text-muted);">No — warranty is only valid while the panel is active. Renew first, then claim if needed.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History of my claims -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">My Claim History</div>
+          <div id="claim-history">
+            <div style="font-size:.82rem;color:var(--text-muted);">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="/app.js"></script>
+<script>
+let _user, _profile;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  const auth = await requireAuth('/index.html');
+  if (!auth) return;
+  _user    = auth.session.user;
+  _profile = auth.profile;
+
+  await renderNavbar('garansi');
+  renderSidebar('garansi');
+
+  // Pre-fill phone
+  if (_profile?.phone) document.getElementById('claim-phone').value = _profile.phone;
+
+  loadClaimHistory();
+});
+
+let _validateTimer;
+function validateOrderId(val) {
+  clearTimeout(_validateTimer);
+  const status = document.getElementById('order-id-status');
+  if (!val) { status.textContent = ''; return; }
+  status.textContent = 'Checking…'; status.className = 'form-help';
+  _validateTimer = setTimeout(async () => {
+    // We can't check without phone, just indicate format
+    if (val.startsWith('ORD') || val.startsWith('RNW')) {
+      status.textContent = '✓ Order ID format looks correct';
+      status.className = 'form-success';
+    } else {
+      status.textContent = 'Order ID should start with ORD or RNW';
+      status.className = 'form-error';
+    }
+  }, 400);
+}
+
+async function submitClaim(e) {
+  e.preventDefault();
+  const btn    = document.getElementById('claim-btn');
+  const status = document.getElementById('claim-status');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  status.textContent = '';
+
+  const order_id = document.getElementById('order-id').value.trim();
+  const phone    = document.getElementById('claim-phone').value.trim();
+  const reason   = document.getElementById('claim-reason').value.trim();
+
+  try {
+    const res = await fetch('/api/garansi/claim', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ order_id, phone, reason })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      status.className = 'form-error';
+      status.textContent = '❌ ' + data.message;
+      return;
+    }
+    // Show result
+    showClaimResult(data);
+  } catch (ex) {
+    status.className = 'form-error';
+    status.textContent = 'Network error: ' + ex.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '🛡 Submit Warranty Claim';
+  }
+}
+
+function showClaimResult(data) {
+  document.getElementById('garansi-form').style.display = 'none';
+  const result = document.getElementById('claim-result');
+  result.classList.remove('hidden');
+
+  document.getElementById('claim-result-msg').textContent = data.message;
+
+  if (data.panel_data) {
+    const creds = document.getElementById('new-creds');
+    creds.classList.remove('hidden');
+    document.getElementById('res-user').textContent = data.panel_data.username;
+    document.getElementById('res-pw').textContent   = data.panel_data.password || data.new_password || '—';
+    document.getElementById('res-url').textContent  = data.panel_data.login_url || '—';
+    document.getElementById('res-exp').textContent  = data.panel_data.expired_date ? '📅 Expires: ' + data.panel_data.expired_date : '';
+  }
+  toast('Warranty claim processed!', 'success');
+}
+
+function resetClaim() {
+  document.getElementById('garansi-form').style.display = 'flex';
+  document.getElementById('garansi-form').reset();
+  document.getElementById('claim-result').classList.add('hidden');
+  document.getElementById('claim-status').textContent = '';
+}
+
+async function loadClaimHistory() {
+  const phone = _profile?.phone;
+  const el    = document.getElementById('claim-history');
+  if (!phone) { el.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);">No phone on file.</div>'; return; }
+  try {
+    const res  = await fetch('/api/history/' + encodeURIComponent(phone));
+    const data = await res.json();
+    const claims = (data || []).filter(h => h.category === 'garansi');
+    if (!claims.length) {
+      el.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);">No claims submitted yet.</div>';
+      return;
+    }
+    el.innerHTML = claims.map(c => `
+      <div style="border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span class="mono" style="font-size:.75rem;color:var(--text-muted);">${c.transaction_id}</span>
+          <span class="badge badge-success badge-dot">Processed</span>
+        </div>
+        <div style="font-size:.82rem;color:var(--text-secondary);">${c.item}</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:4px;">📅 ${formatDate(c.time)} · Reason: ${c.reason||'—'}</div>
+      </div>
+    `).join('');
+  } catch {
+    el.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);">Unable to load history.</div>';
+  }
+}
+</script>
 </body>
 </html>
