@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "js/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "SUPABASE_URL": "@supabase-url",
+    "SUPABASE_KEY": "@supabase-key",
+    "GOOGLE_CLIENT_ID": "@google-client-id",
+    "PAKASIR_SLUG": "@pakasir-slug",
+    "PAKASIR_API_KEY": "@pakasir-api-key",
+    "PTERO_DOMAIN": "@ptero-domain",
+    "PTERO_API_KEY": "@ptero-api-key",
+    "TELEGRAM_TOKEN": "@telegram-token",
+    "TELEGRAM_OWNER_ID": "@telegram-owner-id"
+  }
+}

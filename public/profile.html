@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - PanelShop</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-server"></i>
+                <span>PanelShop</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/profile.html" class="active">Profile</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img id="profileAvatar" src="/img/default-avatar.png" alt="Avatar">
+                    <button id="changeAvatarBtn" class="avatar-btn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <h2 id="profileName">Loading...</h2>
+                <p id="profileEmail"></p>
+            </div>
+            <div class="profile-info">
+                <div class="info-group">
+                    <label>Username</label>
+                    <p id="profileUsername"></p>
+                </div>
+                <div class="info-group">
+                    <label>Member Since</label>
+                    <p id="profileJoined"></p>
+                </div>
+                <div class="info-group">
+                    <label>Total Orders</label>
+                    <p id="totalOrders">0</p>
+                </div>
+                <div class="info-group">
+                    <label>Active Panels</label>
+                    <p id="activePanels">0</p>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button id="changePasswordBtn" class="btn-secondary">
+                    <i class="fas fa-key"></i> Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Change Password</h2>
+            <form id="changePasswordForm">
+                <input type="password" placeholder="Current Password" required>
+                <input type="password" placeholder="New Password" required>
+                <input type="password" placeholder="Confirm New Password" required>
+                <button type="submit" class="btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/profile.js"></script>
+</body>
+</html>

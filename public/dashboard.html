@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PanelShop</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-server"></i>
+                <span>PanelShop</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html" class="active">Dashboard</a>
+                <a href="/profile.html">Profile</a>
+                <a href="/garansi.html">Garansi</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="user-info">
+                <img id="userAvatar" src="/img/default-avatar.png" alt="Avatar">
+                <h3 id="userName">Loading...</h3>
+                <p id="userEmail"></p>
+            </div>
+            <div class="sidebar-menu">
+                <button class="menu-btn active" data-tab="order">
+                    <i class="fas fa-shopping-cart"></i> Order Panel
+                </button>
+                <button class="menu-btn" data-tab="my-panels">
+                    <i class="fas fa-server"></i> My Panels
+                </button>
+                <button class="menu-btn" data-tab="history">
+                    <i class="fas fa-history"></i> Order History
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Order Tab -->
+            <div id="orderTab" class="tab-content active">
+                <h2>Order New Panel</h2>
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+            <!-- My Panels Tab -->
+            <div id="myPanelsTab" class="tab-content">
+                <h2>My Panels</h2>
+                <div id="myPanelsList" class="panels-list">
+                    <!-- User panels will be loaded here -->
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content">
+                <h2>Order History</h2>
+                <div id="historyList" class="history-list">
+                    <!-- Order history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Complete Payment</h2>
+            <div id="paymentContent">
+                <!-- Payment details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

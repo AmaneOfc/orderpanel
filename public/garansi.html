@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garansi - PanelShop</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-server"></i>
+                <span>PanelShop</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/garansi.html" class="active">Garansi</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="garansi-container">
+        <div class="garansi-header">
+            <i class="fas fa-shield-alt"></i>
+            <h1>Claim Warranty</h1>
+            <p>Get your panel reset or password changed for free</p>
+        </div>
+
+        <div class="garansi-form">
+            <div class="form-group">
+                <label>Select Panel</label>
+                <select id="panelSelect">
+                    <option value="">Choose your panel...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Issue Type</label>
+                <select id="issueType">
+                    <option value="password">Forgot Password</option>
+                    <option value="error">Panel Error</option>
+                    <option value="slow">Slow Performance</option>
+                    <option value="other">Other Issues</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="issueDesc" rows="4" placeholder="Describe your issue in detail..."></textarea>
+            </div>
+            <button id="claimGaransiBtn" class="btn-primary">Claim Warranty</button>
+        </div>
+
+        <div class="garansi-info">
+            <h3>Warranty Terms</h3>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> Free warranty for all active panels</li>
+                <li><i class="fas fa-check-circle"></i> Password reset available anytime</li>
+                <li><i class="fas fa-check-circle"></i> Panel reinstall within 24 hours</li>
+                <li><i class="fas fa-check-circle"></i> Technical support included</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="/js/garansi.js"></script>
+</body>
+</html>
